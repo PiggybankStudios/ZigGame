@@ -1,0 +1,24 @@
+{
+	"folders":
+	[
+		{
+			"path": ".",
+			"folder_exclude_patterns": [
+				"lib",
+			],
+		},
+		{
+			"path": "./lib/include/gylib",
+			"name": "GyLib",
+			"folder_exclude_patterns": [
+				"build",
+			],
+			"file_exclude_patterns": [
+				"*.sublime-project",
+				".gitignore",
+				"notes.todo",
+				"*.rdbg",
+			],
+		}
+	]
+}
