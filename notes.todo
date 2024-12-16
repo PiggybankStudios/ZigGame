@@ -1,0 +1,9 @@
+
+# TODO List
+	[ ] Get GLFW linked in the build.zig
+	[ ] Get a window opened with GLFW
+
+# Notes
+	[ ] List of Zig games - "https://github.com/ValorZard/awesome-zig-gamedev"
+	[ ] "https://machengine.org/v0.4/pkg/mach-glfw/"
+	[ ] 

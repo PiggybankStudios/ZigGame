@@ -20,6 +20,12 @@ pub fn build(b: *std.Build) void
 	});
 	b.installArtifact(exe);
 	
+	const glfwDep = b.dependency("mach_glfw", .{
+		.target = b.host,
+		.optimize = .Debug,
+	});
+	exe.root_module.addImport("mach-glfw", glfwDep.module("mach-glfw"));
+	
 	// use "zig build run" to make this step execute
 	const runExe = b.addRunArtifact(exe);
 	const runStep = b.step("run", "Run the game");

@@ -19,6 +19,14 @@
 				"notes.todo",
 				"*.rdbg",
 			],
-		}
+		},
+		{
+			"path": "./lib/include/glfw/src",
+			"name": "mach-glfw",
+			"folder_exclude_patterns": [
+			],
+			"file_exclude_patterns": [
+			],
+		},
 	]
 }
