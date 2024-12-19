@@ -4,43 +4,13 @@
 //  Description: 
 //  	** Holds the main entry pointer for the game portion of the codebase
 
-const Window = struct
-{
-	allocator: Allocator,
-	glfwWindow: glfw.Window,
-	nameNt: [:0]u8 = undefined,
-	name: []u8 = "",
-	
-	fn destroy(self: *Window) void
-	{
-		if (self.name.len > 0)
-		{
-			self.allocator.free(self.nameNt);
-			self.name = "";
-		}
-		self.glfwWindow.destroy();
-	}
-	fn setName(self: *Window, newName: []const u8) !void
-	{
-		if (self.name.len > 0)
-		{
-			self.allocator.free(self.nameNt);
-			self.name = "";
-		}
-		if (newName.len > 0)
-		{
-			const newSpace = try self.allocator.alloc(u8, newName.len+1);
-			@memcpy(newSpace[0..newName.len], newName);
-			newSpace[newName.len] = 0;
-			self.nameNt = newSpace[0..newName.len :0];
-			self.name = newSpace[0..newName.len];
-		}
-		if (self.name.len > 0)
-		{
-			self.glfwWindow.setTitle(self.nameNt);
-		}
-	}
-};
+const Common = @import("common.zig");
+const std = Common.std;
+const glfw = Common.glfw;
+const print = std.debug.print;
+const assert = std.debug.assert;
+const Allocator = std.mem.Allocator;
+
 
 /// Default GLFW error handling callback
 fn errorCallback(error_code: glfw.ErrorCode, description: [:0]const u8) void
@@ -120,12 +90,12 @@ pub fn main() !void
 	defer glfw.terminate();
 	
 	// Create our window
-	const glfwWindow = glfw.Window.create(640, 480, "Hello, mach-glfw!", null, null, .{}) orelse
+	var window = Common.Window.create(stdAllocator, 640, 480, "Hello, mach-glfw!") catch |err|
 	{
-		std.log.err("failed to create GLFW window: {?s}", .{glfw.getErrorString()});
+		std.log.err("Failed to create Window: {}", .{err});
 		std.process.exit(1);
 	};
-	var window = Window { .allocator = stdAllocator, .glfwWindow = glfwWindow };
+	defer stdAllocator.destroy(window);
 	defer window.destroy();
 	
 	try window.setName("Zig Game!");
@@ -147,9 +117,3 @@ pub fn main() !void
 		glfw.pollEvents();
 	}
 }
-
-const std = @import("std");
-const print = std.debug.print;
-const assert = std.debug.assert;
-const Allocator = std.mem.Allocator;
-const glfw = @import("mach-glfw");
