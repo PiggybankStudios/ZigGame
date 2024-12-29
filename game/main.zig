@@ -11,6 +11,19 @@ const print = std.debug.print;
 const assert = std.debug.assert;
 const Allocator = std.mem.Allocator;
 
+const PlatformState = struct
+{
+	initialized: bool,
+	stdGpa: std.heap.GeneralPurposeAllocator(.{
+			.enable_memory_limit = false,
+			.safety = true,
+			.thread_safe = false,
+			.verbose_log = false,
+	}),
+	stdHeap: *Allocator,
+	window: *Common.Window,
+};
+var Platform: *PlatformState = null;
 
 /// Default GLFW error handling callback
 fn errorCallback(error_code: glfw.ErrorCode, description: [:0]const u8) void
@@ -68,35 +81,33 @@ fn contentScaleCallback(window: glfw.Window, xscale: f32, yscale: f32) void
 
 pub fn main() !void
 {
-	var stdGpa = std.heap.GeneralPurposeAllocator(.{
-		.enable_memory_limit = false,
-		.safety = true,
-		.thread_safe = false,
-		.verbose_log = false,
-	}){};
-	defer
+	// +==============================+
+	// |    Prepare PlatformState     |
+	// +==============================+
 	{
-		const deinitResult = stdGpa.deinit();
-		assert(deinitResult == .ok);
+		var stdGpa = {};
+		const stdAllocator: Allocator = stdGpa.allocator();
+		
+		Platform = try Common.Helpers.createDefault(PlatformState, stdAllocator);
+		
+		Platform.stdHeap = stdAllocator;
+		
+		glfw.setErrorCallback(errorCallback);
+		if (!glfw.init(.{}))
+		{
+			std.log.err("failed to initialize GLFW: {?s}", .{glfw.getErrorString()});
+			std.process.exit(1);
+		}
+		
+		
+		// Create our window
+		var window = Common.Window.create(stdAllocator, 640, 480, "Hello, mach-glfw!") catch |err|
+		{
+			std.log.err("Failed to create Window: {}", .{err});
+			std.process.exit(1);
+		};
+		
 	}
-	const stdAllocator = stdGpa.allocator();
-	
-	glfw.setErrorCallback(errorCallback);
-	if (!glfw.init(.{}))
-	{
-		std.log.err("failed to initialize GLFW: {?s}", .{glfw.getErrorString()});
-		std.process.exit(1);
-	}
-	defer glfw.terminate();
-	
-	// Create our window
-	var window = Common.Window.create(stdAllocator, 640, 480, "Hello, mach-glfw!") catch |err|
-	{
-		std.log.err("Failed to create Window: {}", .{err});
-		std.process.exit(1);
-	};
-	defer stdAllocator.destroy(window);
-	defer window.destroy();
 	
 	try window.setName("Zig Game!");
 	
@@ -116,4 +127,10 @@ pub fn main() !void
 		window.glfwWindow.swapBuffers();
 		glfw.pollEvents();
 	}
+	
+	Platform.stdHeap.destroy(Platform.window);
+	Platform.window.destroy();
+	glfw.terminate();
+	const deinitResult = stdGpa.deinit();
+	assert(deinitResult == .ok);
 }
